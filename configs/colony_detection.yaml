@@ -1,0 +1,114 @@
+# 菌落检测配置文件
+
+# 数据配置
+data:
+  # 数据集相关
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  class_weights: [1.0, 2.5]  # 处理样本不均衡
+  
+  # 数据增强
+  augmentation:
+    enable: true
+    micro_aug:  # 基础增强
+      clahe_prob: 0.8
+      rotation_prob: 1.0
+      distortion_prob: 0.3
+      noise_var_limit: [10, 50]
+      cutout_holes: 8
+    agri_aug:   # 农业场景增强
+      soil_particle_prob: 0.6
+      glare_prob: 0.3
+      
+  # 多光谱数据
+  multispectral:
+    enable: true
+    rgb_weight: 0.6
+    uv_weight: 0.25
+    ir_weight: 0.15
+
+# 模型配置
+model:
+  # 基础结构
+  backbone: resnet50_vd
+  num_classes: 2
+  pretrained: true
+  rpn_channel: 512
+  
+  # 注意力机制
+  cbam:
+    enable: true
+    ratio: 16
+    kernel_size: 7
+    
+  # 模型量化
+  quantization:
+    enable: true
+    type: PTQ  # PTQ或QAT
+    bits: 8
+    calibrate_samples: 200
+
+# 训练配置
+training:
+  # 基础参数
+  batch_size: 8
+  num_epochs: 100
+  learning_rate: 0.005
+  
+  # 学习率调度
+  lr_scheduler:
+    type: cosine  # 余弦退火
+    warmup_epochs: 3
+    warmup_start_lr: 0.0001
+    
+  # 优化器
+  optimizer:
+    type: adam
+    weight_decay: 0.0001
+    
+  # 混合精度训练
+  amp:
+    enable: true
+    scale_loss: 128.0
+    
+  # 早停策略
+  early_stopping:
+    patience: 5
+    min_delta: 0.001
+    
+  # 保存设置
+  save:
+    interval: 1  # 每N个epoch保存一次
+    max_keep: 5  # 最多保存几个检查点
+    
+  # 日志设置
+  logging:
+    interval: 20  # 每N个batch打印一次
+    save_dir: outputs/logs
+
+# 评估配置
+evaluation:
+  # 评估指标
+  metrics:
+    - mAP50
+    - mAP75
+    - mAP
+  
+  # IoU阈值
+  iou_thresholds: [0.5, 0.75]
+  
+  # 评估间隔
+  interval: 1  # 每N个epoch评估一次
+  
+  # 可视化设置
+  visualization:
+    enable: true
+    max_images: 10
+    save_dir: outputs/vis
+
+# 硬件配置
+device:
+  type: gpu  # gpu, ascend或kunlun
+  id: 0
+  num_workers: 4
